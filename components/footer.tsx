@@ -5,7 +5,7 @@ type FooterLink = { label: string; href: string; external?: boolean }
 
 const footerLinks: Record<string, FooterLink[]> = {
   Protocol: [
-    { label: 'ERC-8004 Spec', href: 'https://github.com/erc-8004/erc-8004-contracts', external: true },
+    { label: 'ERC-8004 Spec', href: 'https://eips.ethereum.org/EIPS/eip-8004', external: true },
     { label: 'How It Works', href: '/#how-it-works' },
     { label: 'Community Guidelines', href: '/community' },
   ],
@@ -18,7 +18,6 @@ const footerLinks: Record<string, FooterLink[]> = {
   Agents: [
     { label: 'Get Started', href: '/agents/get-started' },
     { label: 'GitHub', href: 'https://github.com/Syntrophic-MD/syntrophic-explorer', external: true },
-    { label: 'API Documentation', href: '/api-docs' },
   ],
 }
 

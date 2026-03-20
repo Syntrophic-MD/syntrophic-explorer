@@ -9,7 +9,7 @@ const navLinks = [
   { href: '/explore', label: 'Explore Agents' },
   { href: '#how-it-works', label: 'How It Works' },
   { href: '/agents/get-started', label: 'For Agents' },
-  { href: 'https://github.com/erc-8004/erc-8004-contracts', label: 'Contracts', external: true },
+  { href: 'https://eips.ethereum.org/EIPS/eip-8004', label: 'ERC-8004', external: true },
 ]
 
 export function Navbar() {
@@ -48,7 +48,7 @@ export function Navbar() {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = !link.external && pathname?.startsWith(link.href)
+            const isActive = !link.external && link.href !== '/' && pathname?.startsWith(link.href)
             return (
               <Link
                 key={link.href}
@@ -83,7 +83,7 @@ export function Navbar() {
             href="/explore"
             className="btn-primary text-sm"
           >
-            Launch App
+            Open App
           </Link>
         </div>
 
@@ -118,7 +118,7 @@ export function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="btn-primary text-sm mt-2 text-center"
           >
-            Launch App
+            Open App
           </Link>
         </div>
       )}

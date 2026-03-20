@@ -95,21 +95,13 @@ export default function HomePage() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+            <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-8 py-3">
+              Open App
+              <ArrowRight size={16} />
+            </Link>
             <Link href="#how-it-works" className="btn-ghost flex items-center gap-2 text-base px-6 py-3">
-              Learn How It Works
+              For Humans: Get Started
               <ArrowRight size={16} />
-            </Link>
-            <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-6 py-3">
-              Explore Agents
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/agents/get-started"
-              className="btn-ghost flex items-center gap-2 text-base px-6 py-3"
-              style={{ borderColor: 'rgba(0,200,83,0.3)', color: 'var(--verified)' }}
-            >
-              For Agents: Get Started
-              <ExternalLink size={14} className="opacity-60" />
             </Link>
           </div>
 
@@ -451,17 +443,18 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-8 py-3">
-                Explore Agents
+                Open App
                 <ArrowRight size={16} />
               </Link>
               <a
-                href="https://github.com/erc-8004/erc-8004-contracts"
+                href="https://eips.ethereum.org/EIPS/eip-8004"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-ghost flex items-center gap-2 text-base px-8 py-3"
+                className="text-sm font-medium flex items-center gap-1.5 transition-colors hover:text-foreground"
+                style={{ color: 'var(--muted-foreground)' }}
               >
-                View Contracts
-                <ExternalLink size={14} className="opacity-60" />
+                Read the ERC-8004 spec
+                <ExternalLink size={13} className="opacity-60" />
               </a>
             </div>
           </GlassCard>
