@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { Github, ExternalLink, Zap } from 'lucide-react'
 
-const footerLinks = {
+type FooterLink = { label: string; href: string; external?: boolean }
+
+const footerLinks: Record<string, FooterLink[]> = {
   Protocol: [
     { label: 'ERC-8004 Spec', href: 'https://github.com/erc-8004/erc-8004-contracts', external: true },
     { label: 'Contracts', href: '#contracts' },
