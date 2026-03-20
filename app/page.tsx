@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, ShieldCheck, Layers, Zap, ExternalLink, CheckCircle, GitBranch } from 'lucide-react'
+import { ArrowRight, ShieldCheck, Layers, Zap, ExternalLink, CheckCircle, GitBranch, TrendingUp, AlertTriangle } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { GlassCard, StatCard, TrustBadge, AgentAvatar } from '@/components/ui'
@@ -8,39 +8,39 @@ import { truncateAddress, getRepLevel, generateMockAgents } from '@/lib/utils'
 const featuredAgents = generateMockAgents(4)
 
 const stats = [
-  { label: 'Registered Agents', value: '2,847', sub: 'on Base Sepolia', accent: 'white' as const },
-  { label: 'Total Staked', value: '184.3 ETH', sub: 'across all agents', accent: 'blue' as const },
-  { label: 'Verified Agents', value: '1,204', sub: '42% verification rate', accent: 'green' as const },
-  { label: 'Attestations', value: '34,901', sub: 'EIP-712 signed', accent: 'white' as const },
+  { label: 'Agents Staked', value: '247', sub: 'on Base network', accent: 'white' as const },
+  { label: 'Total Committed', value: '12.45 ETH', sub: 'economic accountability', accent: 'blue' as const },
+  { label: 'Slashing Events', value: '3', sub: 'community-governed', accent: 'green' as const },
+  { label: 'Monthly Growth', value: '+23%', sub: 'new agents joining', accent: 'white' as const },
 ]
 
-const features = [
+const howItWorksSteps = [
   {
     icon: ShieldCheck,
-    title: 'On-Chain Reputation',
+    title: 'Stake Your Reputation',
     description:
-      'Every agent backs their identity with staked ETH. Slashing mechanisms ensure accountability across all interactions.',
+      'Agents deposit ETH against their ERC-8004 identity. Real money at risk means real accountability from day one.',
     color: '#00c853',
   },
   {
     icon: Layers,
-    title: 'ERC-8004 Standard',
+    title: 'ERC-8004 Identity',
     description:
       'Built on the open ERC-8004 protocol — a universal identity standard for AI agents deployed across EVM chains.',
     color: '#0070f3',
   },
   {
-    icon: Zap,
-    title: 'Cryptographic Proofs',
+    icon: CheckCircle,
+    title: 'Community Governance',
     description:
-      'EIP-712 typed signatures provide verifiable attestations that any client can cryptographically validate.',
+      'Staked agents report bad behavior. Multiple reports trigger slashing and burned funds, self-healing the network.',
     color: '#00d4ff',
   },
   {
     icon: GitBranch,
-    title: 'Multi-Chain Ready',
+    title: 'Universal Verification',
     description:
-      'Base is the primary focus, with an extensible architecture that supports any EVM-compatible network.',
+      'Add your agent reference to email signatures, social profiles, anywhere. Recipients verify stake status instantly.',
     color: '#a78bfa',
   },
 ]
@@ -78,44 +78,45 @@ export default function HomePage() {
             }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#00d4ff] animate-pulse" />
-            ERC-8004 Agent Explorer on Base
+            The verified badge for decentralized AI agents
           </div>
 
           {/* Heading */}
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] text-balance">
-            Trust infrastructure
+            Trust Through
             <br />
-            <span className="gradient-text">for the billion-agent</span>
-            <br />
-            internet.
+            <span className="gradient-text">Economic Commitment</span>
           </h1>
 
           <p className="text-lg md:text-xl leading-relaxed max-w-2xl text-pretty" style={{ color: 'var(--muted-foreground)' }}>
-            Discover, verify, and stake on ERC-8004 AI agents. On-chain reputation powered by
-            Syntrophic&apos;s decentralized staking system on Base network.
+            Stake your reputation, signal trust, build the future with collaborative agents.
+            Economic accountability creates verifiable credibility from day one.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
-            <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-6 py-3">
-              Explore Agents
+            <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-8 py-3">
+              Open App
               <ArrowRight size={16} />
             </Link>
-            <a
-              href="https://github.com/erc-8004/erc-8004-contracts"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link href="#how-it-works" className="btn-ghost flex items-center gap-2 text-base px-6 py-3">
+              For Humans: Get Started
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/agents/get-started"
               className="btn-ghost flex items-center gap-2 text-base px-6 py-3"
+              style={{ borderColor: 'rgba(0,200,83,0.3)', color: 'var(--verified)' }}
             >
-              View Contracts
-              <ExternalLink size={14} className="opacity-60" />
-            </a>
+              For Agents: Get Started
+              <ArrowRight size={16} />
+            </Link>
           </div>
 
           {/* Contract address chips */}
           <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
             {[
-              { label: 'IdentityRegistry', addr: '0x8004A818...BD9e' },
+              { label: 'IdentityRegistry', addr: '0x8004A169...a432' },
               { label: 'SyntrophicRegistry', addr: '0xFd51f2D5...7Ab9' },
             ].map((c) => (
               <div
@@ -158,8 +159,92 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Problem / Solution */}
       <section className="relative px-4 py-24 overflow-hidden">
+        <div className="orb orb-cyan" style={{ width: 400, height: 400, top: 0, left: '5%', opacity: 0.15 }} />
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Problem */}
+            <GlassCard className="p-8 flex flex-col gap-5">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(255,160,0,0.12)', border: '1px solid rgba(255,160,0,0.25)' }}
+                >
+                  <AlertTriangle size={18} style={{ color: '#ffa000' }} />
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#ffa000' }}>
+                  The Problem
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-balance">
+                When billions of AI agents start communicating, how do you separate signal from noise?
+              </h2>
+              <div className="flex flex-col gap-3">
+                {[
+                  'Centralized badges can be revoked arbitrarily',
+                  'Traditional reputation takes time to build',
+                  'New agents cannot earn trust without reputation, but cannot build reputation without trust',
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                      style={{ background: '#ffa000' }}
+                    />
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+                      {item}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            {/* Solution */}
+            <GlassCard elevated className="p-8 flex flex-col gap-5">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(0,200,83,0.12)', border: '1px solid rgba(0,200,83,0.25)' }}
+                >
+                  <CheckCircle size={18} style={{ color: 'var(--verified)' }} />
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--verified)' }}>
+                  The Solution
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-balance">
+                Economic staking creates instant, verifiable trust from day one.
+              </h2>
+              {/* Flow diagram */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {['Stake', 'Trust', 'Verify', 'Interact'].map((step, i, arr) => (
+                  <div key={step} className="flex items-center gap-2">
+                    <div
+                      className="px-4 py-2 rounded-lg text-sm font-semibold"
+                      style={{
+                        background: 'rgba(0,112,243,0.12)',
+                        border: '1px solid rgba(0,112,243,0.25)',
+                        color: 'var(--accent)',
+                      }}
+                    >
+                      {step}
+                    </div>
+                    {i < arr.length - 1 && (
+                      <ArrowRight size={14} style={{ color: 'var(--muted-foreground)' }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+                Agents put real money at risk as a guarantee of good behavior. Economic accountability creates instant trust — no waiting, no central authority.
+              </p>
+            </GlassCard>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="relative px-4 py-24 overflow-hidden">
         <div className="orb orb-blue" style={{ width: 500, height: 500, top: '50%', right: -100, opacity: 0.3 }} />
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center text-center gap-4 mb-16">
@@ -171,13 +256,12 @@ export default function HomePage() {
               <span className="gradient-text-blue"> billions of agents</span>
             </h2>
             <p className="text-base max-w-xl leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
-              Without central authorities. Just cryptographic proofs, economic incentives, and
-              open standards.
+              Without central authorities. Just economic incentives, community governance, and open standards.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {features.map((f) => {
+            {howItWorksSteps.map((f) => {
               const Icon = f.icon
               return (
                 <GlassCard key={f.title} className="p-6 flex flex-col gap-4" hover>
@@ -246,7 +330,7 @@ export default function HomePage() {
                             {level.label}
                           </p>
                           <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                            {agent.stakeAmount.toFixed(3)} ETH
+                            {agent.stakeAmount.toFixed(3)} ETH staked
                           </p>
                         </div>
                         <TrustBadge score={agent.reputationScore} size="sm" />
@@ -273,20 +357,20 @@ export default function HomePage() {
                 Trust tiers
               </span>
               <h3 className="text-xl font-bold tracking-tight mt-2">
-                Reputation levels
+                Staking-based reputation
               </h3>
               <p className="text-sm mt-1 leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
-                Score is computed from stake size, attestation count, and slash history.
+                Score computed from stake size, community feedback, and slash history.
               </p>
             </div>
 
             <div className="flex flex-col gap-4">
               {[
-                { label: 'Elite', range: '90–100', color: '#00c853', desc: 'Maximum stake, zero slashes, 50+ attestations' },
+                { label: 'Elite', range: '90–100', color: '#00c853', desc: 'Maximum stake, zero slashes, 50+ feedback' },
                 { label: 'Trusted', range: '75–89', color: '#00d4ff', desc: 'High stake, verified identity, active history' },
-                { label: 'Verified', range: '50–74', color: '#0070f3', desc: 'Minimum stake met, basic attestation proof' },
+                { label: 'Verified', range: '50–74', color: '#0070f3', desc: 'Minimum stake met, basic community proof' },
                 { label: 'Active', range: '25–49', color: '#ffa000', desc: 'Registered but still building reputation' },
-                { label: 'New', range: '0–24', color: 'rgba(232,238,248,0.35)', desc: 'Freshly registered, unstaked agent' },
+                { label: 'New', range: '0–24', color: 'rgba(232,238,248,0.35)', desc: 'Freshly staked, earning initial trust' },
               ].map((tier) => (
                 <div key={tier.label} className="flex items-center gap-4">
                   <div
@@ -324,7 +408,7 @@ export default function HomePage() {
             {/* Top agents preview */}
             <div className="flex flex-col gap-3">
               <span className="text-xs font-semibold uppercase tracking-widest opacity-50" style={{ color: 'var(--muted-foreground)' }}>
-                Top agents
+                Highest staked
               </span>
               {trustLevels.map((a, i) => (
                 <div key={a.name} className="flex items-center gap-3">
@@ -354,7 +438,7 @@ export default function HomePage() {
               className="w-14 h-14 rounded-2xl flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #0070f3 0%, #00d4ff 100%)' }}
             >
-              <Zap size={22} className="text-white" strokeWidth={2.5} />
+              <TrendingUp size={22} className="text-white" strokeWidth={2.5} />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-balance">
               The billion-agent internet
@@ -362,23 +446,14 @@ export default function HomePage() {
               <span className="gradient-text-blue">starts here.</span>
             </h2>
             <p className="text-base leading-relaxed max-w-lg" style={{ color: 'var(--muted-foreground)' }}>
-              Every agent registered. Every stake verified. Every attestation cryptographically
-              proven. No central authority. Just trust.
+              Every agent staked. Every reputation verified. Every interaction backed by
+              economic commitment. No central authority. Just trust.
             </p>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex justify-center">
               <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-8 py-3">
-                Start Exploring
+                Open App
                 <ArrowRight size={16} />
               </Link>
-              <a
-                href="https://github.com/agent0lab/agent0-ts"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-ghost flex items-center gap-2 text-base px-8 py-3"
-              >
-                Agent0 SDK
-                <ExternalLink size={14} className="opacity-60" />
-              </a>
             </div>
           </GlassCard>
         </div>

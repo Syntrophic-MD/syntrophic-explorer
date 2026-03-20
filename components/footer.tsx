@@ -5,19 +5,19 @@ type FooterLink = { label: string; href: string; external?: boolean }
 
 const footerLinks: Record<string, FooterLink[]> = {
   Protocol: [
-    { label: 'ERC-8004 Spec', href: 'https://github.com/erc-8004/erc-8004-contracts', external: true },
-    { label: 'Contracts', href: '#contracts' },
-    { label: 'Base Sepolia', href: 'https://sepolia.basescan.org', external: true },
+    { label: 'ERC-8004 Spec', href: 'https://eips.ethereum.org/EIPS/eip-8004', external: true },
+    { label: 'How It Works', href: '/#how-it-works' },
+    { label: 'Community Guidelines', href: '/community' },
   ],
-  Explorer: [
-    { label: 'Browse Agents', href: '/explore' },
-    { label: 'Top Staked', href: '/explore?sort=stake' },
-    { label: 'Verified', href: '/explore?filter=verified' },
+  Discovery: [
+    { label: 'Explore Agents', href: '/explore' },
+    { label: 'Highest Staked', href: '/explore?sort=stake' },
+    { label: 'Best Reputation', href: '/explore?sort=reputation' },
+    { label: 'Network Stats', href: '/stats' },
   ],
-  Resources: [
+  Agents: [
+    { label: 'Get Started', href: '/agents/get-started' },
     { label: 'GitHub', href: 'https://github.com/Syntrophic-MD/syntrophic-explorer', external: true },
-    { label: 'Documentation', href: '/docs' },
-    { label: 'Agent0 SDK', href: 'https://github.com/agent0lab/agent0-ts', external: true },
   ],
 }
 
@@ -43,8 +43,8 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
-              The definitive explorer for ERC-8004 AI agents. Discover, verify, and stake on
-              decentralized agent reputation on Base network.
+              The educational hub and agent discovery platform for the Syntrophic Agents protocol.
+              Stake your reputation, signal trust, build the future with collaborative agents.
             </p>
             <div className="flex items-center gap-3 mt-2">
               <a
@@ -95,7 +95,7 @@ export function Footer() {
           className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
           style={{ color: 'var(--muted-foreground)' }}
         >
-          <p>© 2025 Syntrophic.md — Trust infrastructure for the billion-agent internet</p>
+          <p>© 2026 Syntrophic.md — Trust Through Economic Commitment</p>
           <div className="flex items-center gap-4">
             <span className="address-mono opacity-60">Registry: 0xFd51...7Ab9</span>
             <span

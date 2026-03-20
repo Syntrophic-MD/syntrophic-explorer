@@ -6,9 +6,9 @@ import { useState } from 'react'
 import { Menu, X, Zap } from 'lucide-react'
 
 const navLinks = [
-  { href: '/explore', label: 'Explore' },
-  { href: '/docs', label: 'Docs' },
-  { href: 'https://github.com/erc-8004/erc-8004-contracts', label: 'Contracts', external: true },
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '/agents/get-started', label: 'For Agents' },
+  { href: 'https://eips.ethereum.org/EIPS/eip-8004', label: 'ERC-8004', external: true },
 ]
 
 export function Navbar() {
@@ -47,7 +47,7 @@ export function Navbar() {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = !link.external && pathname?.startsWith(link.href)
+            const isActive = !link.external && link.href !== '/' && pathname?.startsWith(link.href)
             return (
               <Link
                 key={link.href}
@@ -68,21 +68,11 @@ export function Navbar() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-widest"
-            style={{
-              background: 'rgba(0, 200, 83, 0.1)',
-              border: '1px solid rgba(0, 200, 83, 0.2)',
-              color: '#00c853',
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00c853] animate-pulse" />
-            Base Sepolia
-          </div>
           <Link
             href="/explore"
             className="btn-primary text-sm"
           >
-            Launch App
+            Open App
           </Link>
         </div>
 
@@ -117,7 +107,7 @@ export function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="btn-primary text-sm mt-2 text-center"
           >
-            Launch App
+            Open App
           </Link>
         </div>
       )}

@@ -15,16 +15,16 @@ type FilterKey = 'all' | 'verified' | 'staked' | 'elite'
 type ViewMode = 'grid' | 'list'
 
 const sortOptions: { value: SortKey; label: string }[] = [
-  { value: 'reputation', label: 'Reputation Score' },
-  { value: 'stake', label: 'Stake Amount' },
-  { value: 'attestations', label: 'Attestations' },
-  { value: 'recent', label: 'Recently Active' },
+  { value: 'reputation', label: 'Best Reputation' },
+  { value: 'stake', label: 'Highest Stake' },
+  { value: 'attestations', label: 'Most Active' },
+  { value: 'recent', label: 'Most Recent' },
 ]
 
 const filterOptions: { value: FilterKey; label: string }[] = [
   { value: 'all', label: 'All Agents' },
+  { value: 'staked', label: 'Staked Only' },
   { value: 'verified', label: 'Verified' },
-  { value: 'staked', label: 'Staked' },
   { value: 'elite', label: 'Elite (90+)' },
 ]
 
@@ -83,27 +83,27 @@ export default function ExplorePage() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--accent)' }}>
-                  ERC-8004 Registry
+                  Syntrophic Agent Discovery
                 </p>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
                   Agent Explorer
                 </h1>
                 <p className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>
-                  {allAgents.length} agents registered on Base Sepolia
+                  {allAgents.length} agents registered — search by name, description, or stake amount
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <p className="stat-number text-xl font-bold text-foreground">
-                    {allAgents.filter((a) => a.isVerified).length}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Verified</p>
-                </div>
-                <div className="text-center">
-                  <p className="stat-number text-xl font-bold" style={{ color: 'var(--accent)' }}>
                     {allAgents.filter((a) => a.isStaked).length}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Staked</p>
+                </div>
+                <div className="text-center">
+                  <p className="stat-number text-xl font-bold" style={{ color: 'var(--accent)' }}>
+                    {allAgents.filter((a) => a.isVerified).length}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Verified</p>
                 </div>
                 <div className="text-center">
                   <p className="stat-number text-xl font-bold" style={{ color: 'var(--verified)' }}>
@@ -295,9 +295,9 @@ export default function ExplorePage() {
                 style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}
               >
                 <div className="col-span-4">Agent</div>
-                <div className="col-span-2 text-right">Score</div>
-                <div className="col-span-2 text-right">Stake</div>
-                <div className="col-span-2 text-right">Attestations</div>
+                <div className="col-span-2 text-right">Reputation</div>
+                <div className="col-span-2 text-right">Stake (ETH)</div>
+                <div className="col-span-2 text-right">Feedback</div>
                 <div className="col-span-2 text-right">Status</div>
               </div>
               {filtered.map((agent) => (
@@ -362,19 +362,19 @@ function AgentCard({ agent }: { agent: Agent }) {
             <p className="stat-number text-sm font-bold" style={{ color: level.color }}>
               {agent.reputationScore}
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Score</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Rep.</p>
           </div>
           <div>
             <p className="stat-number text-sm font-bold" style={{ color: 'var(--accent)' }}>
               {agent.stakeAmount.toFixed(3)}
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>ETH</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>ETH Staked</p>
           </div>
           <div>
             <p className="stat-number text-sm font-bold text-foreground">
               {agent.attestationCount}
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Attest.</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Feedback</p>
           </div>
         </div>
 
