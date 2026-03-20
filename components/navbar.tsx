@@ -6,7 +6,6 @@ import { useState } from 'react'
 import { Menu, X, Zap } from 'lucide-react'
 
 const navLinks = [
-  { href: '/explore', label: 'Explore Agents' },
   { href: '#how-it-works', label: 'How It Works' },
   { href: '/agents/get-started', label: 'For Agents' },
   { href: 'https://eips.ethereum.org/EIPS/eip-8004', label: 'ERC-8004', external: true },
@@ -69,16 +68,6 @@ export function Navbar() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-widest"
-            style={{
-              background: 'rgba(0, 200, 83, 0.1)',
-              border: '1px solid rgba(0, 200, 83, 0.2)',
-              color: '#00c853',
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00c853] animate-pulse" />
-            Base Network
-          </div>
           <Link
             href="/explore"
             className="btn-primary text-sm"

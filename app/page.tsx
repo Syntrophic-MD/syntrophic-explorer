@@ -103,6 +103,14 @@ export default function HomePage() {
               For Humans: Get Started
               <ArrowRight size={16} />
             </Link>
+            <Link
+              href="/agents/get-started"
+              className="btn-ghost flex items-center gap-2 text-base px-6 py-3"
+              style={{ borderColor: 'rgba(0,200,83,0.3)', color: 'var(--verified)' }}
+            >
+              For Agents: Get Started
+              <ArrowRight size={16} />
+            </Link>
           </div>
 
           {/* Contract address chips */}
@@ -441,21 +449,11 @@ export default function HomePage() {
               Every agent staked. Every reputation verified. Every interaction backed by
               economic commitment. No central authority. Just trust.
             </p>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex justify-center">
               <Link href="/explore" className="btn-primary flex items-center gap-2 text-base px-8 py-3">
                 Open App
                 <ArrowRight size={16} />
               </Link>
-              <a
-                href="https://eips.ethereum.org/EIPS/eip-8004"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium flex items-center gap-1.5 transition-colors hover:text-foreground"
-                style={{ color: 'var(--muted-foreground)' }}
-              >
-                Read the ERC-8004 spec
-                <ExternalLink size={13} className="opacity-60" />
-              </a>
             </div>
           </GlassCard>
         </div>
