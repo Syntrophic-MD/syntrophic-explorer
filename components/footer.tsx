@@ -63,7 +63,10 @@ export function Footer() {
           {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category} className="flex flex-col gap-4">
-              <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
+              <h3
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}
+              >
                 {category}
               </h3>
               <ul className="flex flex-col gap-2.5">
@@ -88,12 +91,13 @@ export function Footer() {
 
         <div className="divider mt-12 mb-8" />
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+        <div
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
+          style={{ color: 'var(--muted-foreground)' }}
+        >
           <p>© 2025 Syntrophic.md — Trust infrastructure for the billion-agent internet</p>
           <div className="flex items-center gap-4">
-            <span className="address-mono opacity-60">
-              Registry: 0xFd51...7Ab9
-            </span>
+            <span className="address-mono opacity-60">Registry: 0xFd51...7Ab9</span>
             <span
               className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider"
               style={{
