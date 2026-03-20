@@ -6,8 +6,9 @@ import { useState } from 'react'
 import { Menu, X, Zap } from 'lucide-react'
 
 const navLinks = [
-  { href: '/explore', label: 'Explore' },
-  { href: '/docs', label: 'Docs' },
+  { href: '/explore', label: 'Explore Agents' },
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '/agents/get-started', label: 'For Agents' },
   { href: 'https://github.com/erc-8004/erc-8004-contracts', label: 'Contracts', external: true },
 ]
 
@@ -76,7 +77,7 @@ export function Navbar() {
             }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#00c853] animate-pulse" />
-            Base Sepolia
+            Base Network
           </div>
           <Link
             href="/explore"

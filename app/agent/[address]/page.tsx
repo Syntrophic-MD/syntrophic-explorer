@@ -12,23 +12,43 @@ import {
   FileCheck,
   Coins,
   Network,
+  Star,
+  MessageSquare,
+  Flag,
 } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { GlassCard, TrustBadge, AgentAvatar } from '@/components/ui'
 import { truncateAddress, getRepLevel, generateMockAgents, formatDate, seedRandom } from '@/lib/utils'
 
-// Generate mock attestations for a given agent
-function generateAttestations(agentAddress: string, count = 6) {
+// Generate mock community feedback for a given agent
+function generateFeedback(agentAddress: string, count = 5) {
   const rng = seedRandom(parseInt(agentAddress.slice(2, 10), 16))
-  const types = ['EmailVerification', 'CodeExecution', 'DataRetrieval', 'ContractCall', 'AgentHandshake', 'StakeConfirmation']
-  return Array.from({ length: count }, (_, i) => ({
-    id: `0x${Array.from({ length: 64 }, () => Math.floor(rng() * 16).toString(16)).join('')}`,
-    type: types[Math.floor(rng() * types.length)],
-    timestamp: new Date(Date.now() - rng() * 30 * 86400000).toISOString(),
-    signer: `0x${Array.from({ length: 40 }, () => Math.floor(rng() * 16).toString(16)).join('')}`,
-    verified: rng() > 0.2,
-  }))
+  const positiveMessages = [
+    'Excellent service, very reliable and professional',
+    'Fast execution, good communication throughout',
+    'Professional service, as advertised',
+    'Highly recommended, zero issues',
+    'Outstanding performance, will use again',
+  ]
+  const neutralMessages = [
+    'Satisfactory, met expectations',
+    'Average service, nothing exceptional',
+  ]
+  return Array.from({ length: count }, (_, i) => {
+    const score = rng() > 0.8 ? Math.floor(rng() * 2) + 3 : Math.floor(rng() * 2) + 4
+    const isPositive = score >= 4
+    return {
+      id: i,
+      message: isPositive
+        ? positiveMessages[Math.floor(rng() * positiveMessages.length)]
+        : neutralMessages[Math.floor(rng() * neutralMessages.length)],
+      score,
+      from: `@${['trader', 'defi_user', 'crypto_fund', 'agent_bot', 'web3_dev'][Math.floor(rng() * 5)]}${Math.floor(rng() * 99) + 1}`,
+      timestamp: new Date(Date.now() - rng() * 30 * 86400000).toISOString(),
+      positive: score >= 4,
+    }
+  })
 }
 
 // Reputation history for chart (last 30 days)
@@ -56,8 +76,12 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
   if (!agent) notFound()
 
   const level = getRepLevel(agent.reputationScore)
-  const attestations = generateAttestations(agent.address)
+  const feedback = generateFeedback(agent.address)
   const repHistory = generateRepHistory(parseInt(agent.address.slice(2, 8), 16), agent.reputationScore)
+
+  const positiveCount = feedback.filter((f) => f.score >= 4).length
+  const neutralCount = feedback.filter((f) => f.score === 3).length
+  const negativeCount = feedback.filter((f) => f.score <= 2).length
 
   // SVG sparkline
   const maxScore = Math.max(...repHistory.map((p) => p.score))
@@ -73,6 +97,9 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
     .join(' ')
 
   const gradientId = `spark-gradient-${agent.id}`
+
+  // Construct agent reference in the spec format
+  const agentReference = `eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432:${agent.id}`
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,6 +144,19 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
                       Verified Agent
                     </div>
                   )}
+                  {agent.isStaked && (
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        background: 'rgba(0,112,243,0.12)',
+                        border: '1px solid rgba(0,112,243,0.25)',
+                        color: 'var(--accent)',
+                      }}
+                    >
+                      <Shield size={12} />
+                      Staked
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 mb-3">
@@ -135,7 +175,7 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
                     <Copy size={13} />
                   </button>
                   <a
-                    href={`https://sepolia.basescan.org/address/${agent.address}`}
+                    href={`https://basescan.org/address/${agent.address}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 rounded-md transition-colors hover:bg-white/[0.06]"
@@ -188,26 +228,26 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
             {[
               {
                 icon: Coins,
-                label: 'Stake Amount',
+                label: 'Current Stake',
                 value: `${agent.stakeAmount.toFixed(4)} ETH`,
                 color: 'var(--accent)',
               },
               {
-                icon: FileCheck,
-                label: 'Attestations',
-                value: agent.attestationCount.toString(),
-                color: 'var(--primary)',
+                icon: Star,
+                label: 'Community Reputation',
+                value: `${agent.reputationScore}/100`,
+                color: level.color,
               },
               {
                 icon: AlertTriangle,
-                label: 'Slash Count',
-                value: agent.slashCount.toString(),
+                label: 'Slash History',
+                value: agent.slashCount === 0 ? '0 events' : `${agent.slashCount} events`,
                 color: agent.slashCount > 0 ? '#ffa000' : 'var(--verified)',
               },
               {
                 icon: Network,
                 label: 'Network',
-                value: 'Base Sepolia',
+                value: 'Base (Chain 8453)',
                 color: 'var(--foreground)',
               },
             ].map((stat) => {
@@ -230,7 +270,7 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
 
           {/* Main content: two-column */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: reputation history + identity */}
+            {/* Left: reputation history + technical info */}
             <div className="lg:col-span-2 flex flex-col gap-6">
               {/* Reputation chart */}
               <GlassCard className="p-6">
@@ -244,7 +284,7 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
                   <div className="flex items-center gap-2">
                     <Activity size={15} style={{ color: 'var(--accent)' }} />
                     <span className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
-                      {agent.reputationScore}
+                      {agent.reputationScore}/100
                     </span>
                   </div>
                 </div>
@@ -286,22 +326,98 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
                 </div>
               </GlassCard>
 
-              {/* Identity details */}
+              {/* Community Reputation & Feedback */}
+              <GlassCard className="p-6 flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
+                      Community
+                    </p>
+                    <h3 className="font-semibold text-foreground">Reputation {'&'} Feedback</h3>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    style={{
+                      background: `${level.color}12`,
+                      border: `1px solid ${level.color}25`,
+                      color: level.color,
+                    }}
+                  >
+                    <Star size={11} />
+                    {agent.reputationScore}/100
+                  </div>
+                </div>
+
+                {/* Feedback summary */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Positive', count: positiveCount, color: 'var(--verified)' },
+                    { label: 'Neutral', count: neutralCount, color: '#ffa000' },
+                    { label: 'Negative', count: negativeCount, color: '#ff5252' },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex flex-col items-center justify-center p-3 rounded-lg gap-1"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <span className="text-lg font-bold stat-number" style={{ color: item.color }}>
+                        {item.count}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="divider" />
+
+                {/* Recent feedback */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
+                    Recent Feedback
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {feedback.map((f) => (
+                      <div
+                        key={f.id}
+                        className="flex items-start gap-3 p-3 rounded-lg"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                          style={{
+                            background: f.positive ? 'rgba(0,200,83,0.15)' : 'rgba(255,160,0,0.15)',
+                          }}
+                        >
+                          <MessageSquare size={11} style={{ color: f.positive ? 'var(--verified)' : '#ffa000' }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-foreground leading-relaxed">{`"${f.message}"`}</p>
+                          <p className="text-[10px] mt-1" style={{ color: 'var(--muted-foreground)' }}>
+                            +{f.score} &middot; {f.from} &middot; {formatDate(f.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </GlassCard>
+
+              {/* Technical Information */}
               <GlassCard className="p-6 flex flex-col gap-5">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
-                    ERC-8004 Identity
+                    Technical Information
                   </p>
-                  <h3 className="font-semibold text-foreground">On-chain Registration</h3>
+                  <h3 className="font-semibold text-foreground">ERC-8004 Identity</h3>
                 </div>
 
                 <div className="flex flex-col gap-4">
                   {[
+                    { label: 'Agent ID', value: agent.id.toString(), mono: false },
+                    { label: 'ERC-8004 Registry', value: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432', mono: true, copy: true },
+                    { label: 'Network', value: `Base (Chain ID: 8453)`, mono: false },
                     { label: 'Agent Address', value: agent.address, mono: true, copy: true },
-                    { label: 'Operator Address', value: agent.operator, mono: true, copy: true },
                     { label: 'Registered', value: formatDate(agent.registeredAt), mono: false },
                     { label: 'Last Active', value: formatDate(agent.lastActive), mono: false },
-                    { label: 'Network', value: `Base Sepolia (Chain ID: ${agent.networkId})`, mono: false },
                   ].map((row) => (
                     <div key={row.label} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
@@ -327,16 +443,44 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
                     </div>
                   ))}
                 </div>
+
+                {/* Agent Reference */}
+                <div
+                  className="rounded-xl p-4 flex flex-col gap-2"
+                  style={{ background: 'rgba(0,112,243,0.06)', border: '1px solid rgba(0,112,243,0.15)' }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)', opacity: 0.8 }}>
+                    Agent Reference
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <code
+                      className="address-mono text-xs break-all"
+                      style={{ color: 'var(--accent)' }}
+                    >
+                      {agentReference}
+                    </code>
+                    <button
+                      className="p-1 rounded transition-colors hover:bg-white/[0.06] flex-shrink-0"
+                      style={{ color: 'var(--muted-foreground)' }}
+                      aria-label="Copy agent reference"
+                    >
+                      <Copy size={11} />
+                    </button>
+                  </div>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+                    Add this reference to email signatures, social profiles, or anywhere to signal your verified stake.
+                  </p>
+                </div>
               </GlassCard>
             </div>
 
-            {/* Right: attestations + stake */}
+            {/* Right: staking status + verification tools */}
             <div className="flex flex-col gap-6">
-              {/* Stake info */}
+              {/* Staking Status */}
               <GlassCard className="p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <Shield size={16} style={{ color: 'var(--primary)' }} />
-                  <h3 className="font-semibold text-foreground">Syntrophic Stake</h3>
+                  <h3 className="font-semibold text-foreground">Staking Status</h3>
                 </div>
 
                 <div
@@ -360,20 +504,37 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
 
                 <div className="flex flex-col gap-3">
                   {[
-                    { label: 'Min Required', value: '0.001 ETH', met: agent.stakeAmount >= 0.001 },
-                    { label: 'Slash Risk', value: agent.slashCount > 0 ? 'Elevated' : 'Low', met: agent.slashCount === 0 },
-                    { label: 'Bond Status', value: agent.isStaked ? 'Active' : 'Inactive', met: agent.isStaked },
+                    {
+                      label: 'Staked Since',
+                      value: formatDate(agent.registeredAt),
+                      met: true,
+                      showDot: false,
+                    },
+                    {
+                      label: 'Slash History',
+                      value: `${agent.slashCount} events`,
+                      met: agent.slashCount === 0,
+                      showDot: true,
+                    },
+                    {
+                      label: 'Status',
+                      value: agent.isStaked ? 'Active & Trusted' : 'Inactive',
+                      met: agent.isStaked,
+                      showDot: true,
+                    },
                   ].map((row) => (
                     <div key={row.label} className="flex items-center justify-between">
                       <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{row.label}</span>
                       <span
-                        className="text-xs font-semibold flex items-center gap-1"
-                        style={{ color: row.met ? 'var(--verified)' : '#ffa000' }}
+                        className="text-xs font-semibold flex items-center gap-1.5"
+                        style={{ color: row.showDot ? (row.met ? 'var(--verified)' : '#ffa000') : 'var(--foreground)' }}
                       >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: row.met ? 'var(--verified)' : '#ffa000' }}
-                        />
+                        {row.showDot && (
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ background: row.met ? 'var(--verified)' : '#ffa000' }}
+                          />
+                        )}
                         {row.value}
                       </span>
                     </div>
@@ -381,51 +542,103 @@ export default async function AgentPage({ params }: { params: Promise<{ address:
                 </div>
               </GlassCard>
 
-              {/* Recent attestations */}
+              {/* Verification Tools */}
               <GlassCard className="p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground">Attestations</h3>
-                  <span className="badge-staked">{attestations.length}</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
+                    Verification
+                  </p>
+                  <h3 className="font-semibold text-foreground">Tools</h3>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {attestations.map((att) => (
+                  {[
+                    {
+                      icon: CheckCircle,
+                      label: 'Verify Stake',
+                      sub: 'Check on blockchain',
+                      href: `https://basescan.org/address/${agent.address}`,
+                      color: 'var(--verified)',
+                    },
+                    {
+                      icon: FileCheck,
+                      label: 'Full Reputation',
+                      sub: 'ERC-8004 Explorer',
+                      href: `https://basescan.org/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`,
+                      color: 'var(--accent)',
+                    },
+                    {
+                      icon: MessageSquare,
+                      label: 'Submit Feedback',
+                      sub: 'Community rating form',
+                      href: '#',
+                      color: '#a78bfa',
+                    },
+                    {
+                      icon: Flag,
+                      label: 'Report Issues',
+                      sub: 'Dispute / slashing process',
+                      href: '#',
+                      color: '#ffa000',
+                    },
+                  ].map((tool) => {
+                    const Icon = tool.icon
+                    return (
+                      <a
+                        key={tool.label}
+                        href={tool.href}
+                        target={tool.href.startsWith('http') ? '_blank' : undefined}
+                        rel={tool.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="flex items-center gap-3 p-3 rounded-lg transition-all hover:border-white/[0.14]"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${tool.color}15`, border: `1px solid ${tool.color}25` }}
+                        >
+                          <Icon size={14} style={{ color: tool.color }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-foreground">{tool.label}</p>
+                          <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{tool.sub}</p>
+                        </div>
+                        <ExternalLink size={12} style={{ color: 'var(--muted-foreground)', opacity: 0.5 }} />
+                      </a>
+                    )
+                  })}
+                </div>
+              </GlassCard>
+
+              {/* Recent attestations (compact) */}
+              <GlassCard className="p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">Recent Attestations</h3>
+                  <span className="badge-staked">{agent.attestationCount}</span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {['StakeConfirmation', 'AgentHandshake', 'CodeExecution', 'DataRetrieval'].map((type, i) => (
                     <div
-                      key={att.id}
-                      className="flex items-start gap-3 p-3 rounded-lg"
+                      key={type}
+                      className="flex items-center gap-3 p-3 rounded-lg"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
                       <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{
-                          background: att.verified ? 'rgba(0,200,83,0.15)' : 'rgba(255,160,0,0.15)',
-                        }}
+                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: i === 0 ? 'rgba(0,200,83,0.15)' : 'rgba(0,112,243,0.12)' }}
                       >
-                        {att.verified ? (
+                        {i === 0 ? (
                           <CheckCircle size={11} style={{ color: 'var(--verified)' }} />
                         ) : (
-                          <Clock size={11} style={{ color: '#ffa000' }} />
+                          <Clock size={11} style={{ color: 'var(--accent)' }} />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground">{att.type}</p>
-                        <p className="address-mono text-[10px] mt-0.5 truncate" style={{ color: 'var(--muted-foreground)' }}>
-                          {truncateAddress(att.id, 6)}
-                        </p>
+                        <p className="text-xs font-medium text-foreground">{type}</p>
                         <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                          {formatDate(att.timestamp)}
+                          EIP-712 signed
                         </p>
                       </div>
-                      <a
-                        href={`https://sepolia.basescan.org/tx/${att.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-shrink-0 p-1"
-                        style={{ color: 'var(--muted-foreground)' }}
-                        aria-label="View attestation on Basescan"
-                      >
-                        <ExternalLink size={11} />
-                      </a>
                     </div>
                   ))}
                 </div>

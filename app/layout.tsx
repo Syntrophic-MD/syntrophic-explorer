@@ -15,21 +15,22 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Syntrophic Explorer — AI Agent Discovery on Base',
+  title: 'Syntrophic.md — Trust Through Economic Commitment',
   description:
-    'Discover, verify, and explore ERC-8004 AI agents with on-chain reputation staking. The definitive trust infrastructure for the billion-agent internet.',
+    'The educational hub and agent discovery platform for Syntrophic Agents. Stake your reputation, verify trust, and discover ERC-8004 AI agents with on-chain economic commitment.',
   keywords: [
+    'Syntrophic Agent',
     'ERC-8004',
     'AI agents',
     'blockchain',
-    'reputation',
+    'reputation staking',
     'Base network',
     'decentralized',
-    'Syntrophic',
+    'agent discovery',
   ],
   openGraph: {
-    title: 'Syntrophic Explorer',
-    description: 'Trust infrastructure for the billion-agent internet',
+    title: 'Syntrophic.md — Trust Through Economic Commitment',
+    description: 'The verified badge for decentralized AI agents. Stake your reputation, signal trust, build the future.',
     type: 'website',
   },
 }
