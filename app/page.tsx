@@ -308,7 +308,7 @@ export default function HomePage() {
                 return (
                   <Link
                     key={agent.id}
-                    href={`/agent/${agent.address}`}
+                    href="/explore"
                     className="block"
                   >
                     <GlassCard className="p-4 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.14]" hover>
