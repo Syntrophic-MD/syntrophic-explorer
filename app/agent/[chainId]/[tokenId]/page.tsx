@@ -29,42 +29,25 @@ import { fetchAgent, agentInitials, chainName, type AgentDetail } from '@/lib/ap
 
 export const dynamic = 'force-dynamic'
 
-// Resolve agent_id from multiple URL formats:
-//   - encoded agent_id: "8453%3A0x...%3A1380"  → "8453:0x...:1380"
-//   - numeric chain alias + tokenId handled by looking up via search
-const CHAIN_SLUGS: Record<string, number> = {
-  base: 8453,
-  ethereum: 1,
-  arbitrum: 42161,
-  optimism: 10,
-  polygon: 137,
-  celo: 42220,
-  bnb: 56,
+const REGISTRY_BY_CHAIN: Record<number, string> = {
+  8453:   '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  1:      '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  42161:  '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  10:     '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  137:    '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  42220:  '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  56:     '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  84532:  '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  97:     '0x8004a818bfb912233c491871b3d84c89a494bd9e',
 }
 
-async function resolveAgentId(raw: string): Promise<string> {
-  const decoded = decodeURIComponent(raw)
+export default async function AgentPage({ params }: { params: Promise<{ chainId: string; tokenId: string }> }) {
+  const { chainId, tokenId } = await params
+  const chainIdNum = parseInt(chainId, 10)
+  if (isNaN(chainIdNum)) notFound()
 
-  // Already a full agent_id (contains colons)
-  if (decoded.includes(':')) return decoded
-
-  // Might be a numeric chain_id + tokenId joined with underscore or slash encoded as %2F
-  // The explore page always encodes the full agent_id so this is a fallback for direct URL entry
-  // Try treating raw as "chainSlug_tokenId" e.g. "base_1380"
-  const parts = decoded.split('_')
-  if (parts.length === 2) {
-    const chainId = CHAIN_SLUGS[parts[0].toLowerCase()] ?? parseInt(parts[0])
-    if (!isNaN(chainId)) {
-      return `${chainId}:${parts[1]}`
-    }
-  }
-
-  return decoded
-}
-
-export default async function AgentPage({ params }: { params: Promise<{ address: string }> }) {
-  const { address } = await params
-  const agentId = await resolveAgentId(address)
+  const registry = REGISTRY_BY_CHAIN[chainIdNum] ?? '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'
+  const agentId = `${chainIdNum}:${registry}:${tokenId}`
 
   let agent: AgentDetail
   try {
