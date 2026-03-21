@@ -25,26 +25,15 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { GlassCard, TrustBadge, AgentAvatar } from '@/components/ui'
 import { truncateAddress, getRepLevel, formatDate } from '@/lib/utils'
-import { fetchAgent, agentInitials, chainName, type AgentDetail } from '@/lib/api'
+import { fetchAgent, agentInitials, chainName, CHAIN_SLUG_TO_ID, REGISTRY_BY_CHAIN, type AgentDetail } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
-const REGISTRY_BY_CHAIN: Record<number, string> = {
-  8453:   '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  1:      '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  42161:  '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  10:     '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  137:    '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  42220:  '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  56:     '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  84532:  '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
-  97:     '0x8004a818bfb912233c491871b3d84c89a494bd9e',
-}
+export default async function AgentPage({ params }: { params: Promise<{ chainSlug: string; tokenId: string }> }) {
+  const { chainSlug, tokenId } = await params
 
-export default async function AgentPage({ params }: { params: Promise<{ chainId: string; tokenId: string }> }) {
-  const { chainId, tokenId } = await params
-  const chainIdNum = parseInt(chainId, 10)
-  if (isNaN(chainIdNum)) notFound()
+  const chainIdNum = CHAIN_SLUG_TO_ID[chainSlug.toLowerCase()]
+  if (!chainIdNum) notFound()
 
   const registry = REGISTRY_BY_CHAIN[chainIdNum] ?? '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'
   const agentId = `${chainIdNum}:${registry}:${tokenId}`

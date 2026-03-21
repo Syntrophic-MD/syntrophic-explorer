@@ -13,6 +13,7 @@ import {
   fetchAgents,
   agentInitials,
   chainName,
+  CHAIN_ID_TO_SLUG,
   type Agent8004,
   type AgentsQuery,
   type SortBy,
@@ -355,8 +356,9 @@ export default function ExplorePage() {
 function AgentCard({ agent }: { agent: Agent8004 }) {
   const level = getRepLevel(agent.total_score)
   const initials = agentInitials(agent.name)
+  const chainSlug = CHAIN_ID_TO_SLUG[agent.chain_id] ?? String(agent.chain_id)
   return (
-    <Link href={`/agent/${agent.chain_id}/${agent.token_id}`}>
+    <Link href={`/agent/${chainSlug}/${agent.token_id}`}>
       <GlassCard className="p-5 flex flex-col gap-4 h-full transition-all duration-200 hover:-translate-y-1 cursor-pointer" hover>
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -469,8 +471,9 @@ function AgentCard({ agent }: { agent: Agent8004 }) {
 function AgentListRow({ agent }: { agent: Agent8004 }) {
   const level = getRepLevel(agent.total_score)
   const initials = agentInitials(agent.name)
+  const chainSlug = CHAIN_ID_TO_SLUG[agent.chain_id] ?? String(agent.chain_id)
   return (
-    <Link href={`/agent/${agent.chain_id}/${agent.token_id}`}>
+    <Link href={`/agent/${chainSlug}/${agent.token_id}`}>
       <GlassCard className="px-4 py-3 transition-all duration-150 hover:border-white/[0.14] cursor-pointer">
         <div className="grid grid-cols-12 gap-4 items-center">
           <div className="col-span-12 sm:col-span-4 flex items-center gap-3">

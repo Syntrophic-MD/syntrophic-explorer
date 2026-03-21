@@ -146,18 +146,66 @@ export function agentKey(agentId: string) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Registry contract address by chain_id */
+export const REGISTRY_BY_CHAIN: Record<number, string> = {
+  8453:    '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  1:       '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  42161:   '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  10:      '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  137:     '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  42220:   '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  56:      '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  84532:   '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+  97:      '0x8004a818bfb912233c491871b3d84c89a494bd9e',
+}
+
+/** Map of URL slug → chain_id */
+export const CHAIN_SLUG_TO_ID: Record<string, number> = {
+  ethereum:        1,
+  optimism:        10,
+  bsc:             56,
+  'bsc-testnet':   97,
+  gnosis:          100,
+  solana:          101,
+  'solana-devnet': 103,
+  polygon:         137,
+  base:            8453,
+  arbitrum:        42161,
+  avalanche:       43114,
+  celo:            42220,
+  linea:           59144,
+  scroll:          534352,
+  zksync:          324,
+  'base-sepolia':  84532,
+  'op-sepolia':    11155420,
+  sepolia:         11155111,
+}
+
+/** Map of chain_id → URL slug */
+export const CHAIN_ID_TO_SLUG: Record<number, string> = Object.fromEntries(
+  Object.entries(CHAIN_SLUG_TO_ID).map(([slug, id]) => [id, slug])
+) as Record<number, string>
+
 /** Derive a display-friendly chain name from chain_id */
 export function chainName(chainId: number): string {
   const names: Record<number, string> = {
-    1: 'Ethereum',
-    8453: 'Base',
-    42161: 'Arbitrum',
-    10: 'Optimism',
-    137: 'Polygon',
-    56: 'BNB Chain',
-    42220: 'Celo',
-    97: 'BNB Testnet',
-    84532: 'Base Sepolia',
+    1:        'Ethereum',
+    10:       'Optimism',
+    56:       'BSC',
+    97:       'BSC Testnet',
+    100:      'Gnosis',
+    101:      'Solana',
+    137:      'Polygon',
+    8453:     'Base',
+    42161:    'Arbitrum',
+    43114:    'Avalanche',
+    42220:    'Celo',
+    59144:    'Linea',
+    534352:   'Scroll',
+    324:      'zkSync',
+    84532:    'Base Sepolia',
+    11155420: 'OP Sepolia',
+    11155111: 'Sepolia',
   }
   return names[chainId] ?? `Chain ${chainId}`
 }
