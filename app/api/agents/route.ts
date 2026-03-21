@@ -1,0 +1,28 @@
+import { type NextRequest, NextResponse } from 'next/server'
+
+const API_BASE = 'https://www.8004scan.io/api/v1'
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = req.nextUrl
+  const upstream = `${API_BASE}/agents?${searchParams.toString()}`
+
+  try {
+    const res = await fetch(upstream, {
+      headers: { Accept: 'application/json' },
+      next: { revalidate: 30 },
+    })
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: `Upstream error: ${res.status}` },
+        { status: res.status }
+      )
+    }
+
+    const data = await res.json()
+    return NextResponse.json(data)
+  } catch (err) {
+    console.error('[v0] agents proxy error:', err)
+    return NextResponse.json({ error: 'Failed to reach 8004scan API' }, { status: 502 })
+  }
+}
