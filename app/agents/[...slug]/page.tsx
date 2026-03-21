@@ -7,7 +7,6 @@ import {
   Shield,
   Activity,
   ExternalLink,
-  Copy,
   AlertTriangle,
   Star,
   Globe,
@@ -26,6 +25,7 @@ import { Footer } from '@/components/footer'
 import { GlassCard, TrustBadge, AgentAvatar } from '@/components/ui'
 import { truncateAddress, getRepLevel, formatDate } from '@/lib/utils'
 import { fetchAgent, agentInitials, chainName, CHAIN_SLUG_TO_ID, REGISTRY_BY_CHAIN, type AgentDetail } from '@/lib/api'
+import { CopyButton } from '@/components/copy-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -668,21 +668,6 @@ function ResourceLink({ href, icon: Icon, label, accent, green }: { href: string
   )
 }
 
-function CopyButton({ text }: { text: string }) {
-  return (
-    <button
-      className="p-1 rounded transition-colors hover:bg-white/[0.06]"
-      style={{ color: 'var(--muted-foreground)' }}
-      aria-label="Copy to clipboard"
-      onClick={async () => {
-        try { await navigator.clipboard.writeText(text) } catch {}
-      }}
-    >
-      <Copy size={11} />
-    </button>
-  )
-}
-
 function ParseStatusBadge({ status }: { status: 'ok' | 'warning' | 'error' }) {
   const map = {
     ok: { label: 'Passed', bg: 'rgba(0,200,83,0.1)', border: 'rgba(0,200,83,0.25)', color: 'var(--verified)' },
@@ -690,6 +675,7 @@ function ParseStatusBadge({ status }: { status: 'ok' | 'warning' | 'error' }) {
     error: { label: 'Errors', bg: 'rgba(255,82,82,0.1)', border: 'rgba(255,82,82,0.25)', color: '#ff5252' },
   }
   const s = map[status]
+  if (!s) return null
   return (
     <div className="px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0"
       style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color }}>
