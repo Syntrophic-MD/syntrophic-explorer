@@ -125,8 +125,8 @@ export async function fetchAgents(query: AgentsQuery = {}): Promise<AgentsRespon
 }
 
 export async function fetchAgent(agentId: string): Promise<AgentDetail> {
-  // Always call upstream directly — works server-side (RSC) and avoids relative-URL issues
-  const res = await fetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}`, {
+  // Use literal colons — the 8004scan API requires them unencoded in the path
+  const res = await fetch(`${API_BASE}/agents/${agentId}`, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 60 },
   })

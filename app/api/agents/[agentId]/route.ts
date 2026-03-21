@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ agentId: string }> }
 ) {
   const { agentId } = await params
-  const upstream = `${API_BASE}/agents/${agentId}`
+  // Decode in case the proxy received a percent-encoded agentId, then pass with literal colons
+  const decoded = decodeURIComponent(agentId)
+  const upstream = `${API_BASE}/agents/${decoded}`
 
   try {
     const res = await fetch(upstream, {
