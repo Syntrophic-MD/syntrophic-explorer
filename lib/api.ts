@@ -126,11 +126,19 @@ export async function fetchAgents(query: AgentsQuery = {}): Promise<AgentsRespon
 
 export async function fetchAgent(agentId: string): Promise<AgentDetail> {
   // Use literal colons — the 8004scan API requires them unencoded in the path
-  const res = await fetch(`${API_BASE}/agents/${agentId}`, {
+  const url = `${API_BASE}/agents/${agentId}`
+  console.log('[v0] fetchAgent → GET', url)
+  const res = await fetch(url, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 60 },
   })
-  if (!res.ok) throw new Error(`Failed to fetch agent ${agentId}: ${res.status}`)
+  console.log('[v0] fetchAgent ← status:', res.status, res.statusText)
+  if (!res.ok) {
+    let body = ''
+    try { body = await res.text() } catch { /* ignore */ }
+    console.error('[v0] fetchAgent error body:', body)
+    throw new Error(`Failed to fetch agent ${agentId}: ${res.status} — ${body}`)
+  }
   return res.json()
 }
 
