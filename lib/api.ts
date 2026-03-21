@@ -125,7 +125,11 @@ export async function fetchAgents(query: AgentsQuery = {}): Promise<AgentsRespon
 }
 
 export async function fetchAgent(agentId: string): Promise<AgentDetail> {
-  const res = await fetch(`${PROXY_BASE}/${encodeURIComponent(agentId)}`)
+  // Always call upstream directly — works server-side (RSC) and avoids relative-URL issues
+  const res = await fetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}`, {
+    headers: { Accept: 'application/json' },
+    next: { revalidate: 60 },
+  })
   if (!res.ok) throw new Error(`Failed to fetch agent ${agentId}: ${res.status}`)
   return res.json()
 }
