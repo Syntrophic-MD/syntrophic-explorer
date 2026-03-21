@@ -29,8 +29,12 @@ import { fetchAgent, agentInitials, chainName, CHAIN_SLUG_TO_ID, REGISTRY_BY_CHA
 
 export const dynamic = 'force-dynamic'
 
-export default async function AgentPage({ params }: { params: Promise<{ chainSlug: string; tokenId: string }> }) {
-  const { chainSlug, tokenId } = await params
+export default async function AgentPage({ params }: { params: Promise<{ slug: string[] }> }) {
+  const { slug } = await params
+  const chainSlug = slug[0] ?? ''
+  const tokenId = slug[1] ?? ''
+
+  if (!chainSlug || !tokenId) notFound()
 
   const chainIdNum = CHAIN_SLUG_TO_ID[chainSlug.toLowerCase()]
   if (!chainIdNum) notFound()
