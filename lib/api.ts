@@ -125,73 +125,24 @@ export async function fetchAgents(query: AgentsQuery = {}): Promise<AgentsRespon
 }
 
 export async function fetchAgent(agentId: string): Promise<AgentDetail> {
-  // The upstream /agents/{id} endpoint does not work — use the list endpoint
-  // with search + chain_id to find the agent, then fetch its detail via UUID.
   // agentId format: "{chainId}:{registry}:{tokenId}"
+  // The upstream detail endpoint is: GET /agents/{chainId}/{registry}/{tokenId}
   const parts = agentId.split(':')
   const chainId = parts[0]
+  const registry = parts[1]
   const tokenId = parts[2]
 
-  if (!chainId || !tokenId) {
+  if (!chainId || !registry || !tokenId) {
     throw new Error(`Invalid agentId format: ${agentId}`)
   }
 
-  const listParams = new URLSearchParams({
-    search: tokenId,
-    chain_id: chainId,
-    page: '1',
-    page_size: '5',
-  })
-  const listUrl = `${API_BASE}/agents?${listParams.toString()}`
-  const listRes = await fetch(listUrl, {
+  const url = `${API_BASE}/agents/${chainId}/${registry}/${tokenId}`
+  const res = await fetch(url, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 60 },
   })
-  if (!listRes.ok) {
-    throw new Error(`Failed to search agents: ${listRes.status}`)
-  }
-  const listData: AgentsResponse = await listRes.json()
-
-  // Find the exact match by agent_id
-  const match = listData.items.find((a) => a.agent_id === agentId)
-  if (!match) {
-    throw new Error(`Agent not found: ${agentId}`)
-  }
-
-  // Fetch detail by UUID — if it fails, cast the list item as AgentDetail
-  const detailUrl = `${API_BASE}/agents/${match.id}`
-  const detailRes = await fetch(detailUrl, {
-    headers: { Accept: 'application/json' },
-    next: { revalidate: 60 },
-  })
-  if (detailRes.ok) {
-    return detailRes.json()
-  }
-
-  // Fallback: return list item augmented with nullable detail fields
-  return {
-    ...match,
-    agent_type: null,
-    tags: [],
-    categories: [],
-    services: null,
-    scores: null,
-    cross_chain_links: [],
-    created_block_number: null,
-    created_tx_hash: null,
-    is_endpoint_verified: false,
-    endpoint_verified_at: null,
-    endpoint_verified_domain: null,
-    endpoint_verification_error: null,
-    endpoint_last_checked_at: null,
-    is_active: true,
-    supported_trust_models: [],
-    health_status: null,
-    health_checked_at: null,
-    total_validations: 0,
-    successful_validations: 0,
-    parse_status: null,
-  }
+  if (!res.ok) throw new Error(`Failed to fetch agent ${agentId}: ${res.status}`)
+  return res.json()
 }
 
 // ─── SWR key helpers ──────────────────────────────────────────────────────────
