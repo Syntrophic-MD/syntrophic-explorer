@@ -1,74 +1,90 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, SlidersHorizontal, CheckCircle, ArrowUpDown, LayoutGrid, List, X } from 'lucide-react'
+import Image from 'next/image'
+import useSWR from 'swr'
+import { Search, SlidersHorizontal, CheckCircle, ArrowUpDown, LayoutGrid, List, X, Globe, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
-import { GlassCard, TrustBadge, AgentAvatar, StatCard } from '@/components/ui'
-import { truncateAddress, getRepLevel, generateMockAgents, type Agent } from '@/lib/utils'
+import { GlassCard, TrustBadge, AgentAvatar } from '@/components/ui'
+import { truncateAddress, getRepLevel, formatDate } from '@/lib/utils'
+import {
+  fetchAgents,
+  agentInitials,
+  chainName,
+  type Agent8004,
+  type AgentsQuery,
+  type SortBy,
+} from '@/lib/api'
 
-const allAgents = generateMockAgents(20)
-
-type SortKey = 'reputation' | 'stake' | 'attestations' | 'recent'
-type FilterKey = 'all' | 'verified' | 'staked' | 'elite'
+type FilterKey = 'all' | 'verified' | 'mainnet'
 type ViewMode = 'grid' | 'list'
 
-const sortOptions: { value: SortKey; label: string }[] = [
-  { value: 'reputation', label: 'Best Reputation' },
-  { value: 'stake', label: 'Highest Stake' },
-  { value: 'attestations', label: 'Most Active' },
-  { value: 'recent', label: 'Most Recent' },
+const sortOptions: { value: SortBy; label: string }[] = [
+  { value: 'total_score', label: 'Best Reputation' },
+  { value: 'star_count', label: 'Most Stars' },
+  { value: 'total_feedbacks', label: 'Most Active' },
+  { value: 'created_at', label: 'Most Recent' },
 ]
 
 const filterOptions: { value: FilterKey; label: string }[] = [
   { value: 'all', label: 'All Agents' },
-  { value: 'staked', label: 'Staked Only' },
+  { value: 'mainnet', label: 'Mainnet Only' },
   { value: 'verified', label: 'Verified' },
-  { value: 'elite', label: 'Elite (90+)' },
 ]
+
+const PAGE_SIZE = 20
+
+const swrFetcher = ([, query]: [string, AgentsQuery]) => fetchAgents(query)
 
 export default function ExplorePage() {
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<SortKey>('reputation')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sort, setSort] = useState<SortBy>('total_score')
   const [filter, setFilter] = useState<FilterKey>('all')
   const [view, setView] = useState<ViewMode>('grid')
-  const [minStake, setMinStake] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
+  const [page, setPage] = useState(1)
 
-  const filtered = useMemo(() => {
-    let agents = [...allAgents]
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [search])
 
-    // Search
-    if (search) {
-      const q = search.toLowerCase()
-      agents = agents.filter(
-        (a) =>
-          a.name.toLowerCase().includes(q) ||
-          a.address.toLowerCase().includes(q) ||
-          a.capabilities.some((c) => c.toLowerCase().includes(q))
-      )
-    }
+  const query: AgentsQuery = {
+    page,
+    page_size: PAGE_SIZE,
+    sort_by: sort,
+    sort_order: 'desc',
+    search: debouncedSearch || undefined,
+    is_testnet: filter === 'all' ? undefined : false,
+    is_verified: filter === 'verified' ? true : undefined,
+  }
 
-    // Filter
-    if (filter === 'verified') agents = agents.filter((a) => a.isVerified)
-    if (filter === 'staked') agents = agents.filter((a) => a.isStaked)
-    if (filter === 'elite') agents = agents.filter((a) => a.reputationScore >= 90)
+  const { data, error, isLoading } = useSWR(
+    ['/api/v1/agents', query],
+    swrFetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  )
 
-    // Min stake
-    if (minStake > 0) agents = agents.filter((a) => a.stakeAmount >= minStake)
+  const agents = data?.items ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
-    // Sort
-    agents.sort((a, b) => {
-      if (sort === 'reputation') return b.reputationScore - a.reputationScore
-      if (sort === 'stake') return b.stakeAmount - a.stakeAmount
-      if (sort === 'attestations') return b.attestationCount - a.attestationCount
-      if (sort === 'recent') return new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime()
-      return 0
-    })
+  const handleSortChange = useCallback((val: SortBy) => {
+    setSort(val)
+    setPage(1)
+  }, [])
 
-    return agents
-  }, [search, sort, filter, minStake])
+  const handleFilterChange = useCallback((val: FilterKey) => {
+    setFilter(val)
+    setPage(1)
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,27 +105,29 @@ export default function ExplorePage() {
                   Agent Explorer
                 </h1>
                 <p className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>
-                  {allAgents.length} agents registered — search by name, description, or stake amount
+                  {isLoading
+                    ? 'Loading registry…'
+                    : `${total.toLocaleString()} agents registered — search by name, description, or address`}
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <p className="stat-number text-xl font-bold text-foreground">
-                    {allAgents.filter((a) => a.isStaked).length}
+                    {isLoading ? '—' : total.toLocaleString()}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Staked</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Total</p>
                 </div>
                 <div className="text-center">
                   <p className="stat-number text-xl font-bold" style={{ color: 'var(--accent)' }}>
-                    {allAgents.filter((a) => a.isVerified).length}
+                    {isLoading ? '—' : agents.filter((a) => a.is_verified).length}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Verified</p>
                 </div>
                 <div className="text-center">
                   <p className="stat-number text-xl font-bold" style={{ color: 'var(--verified)' }}>
-                    {allAgents.filter((a) => a.reputationScore >= 90).length}
+                    {isLoading ? '—' : agents.filter((a) => a.total_score >= 75).length}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Elite</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Trusted+</p>
                 </div>
               </div>
             </div>
@@ -124,7 +142,7 @@ export default function ExplorePage() {
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--muted-foreground)' }} />
               <input
                 type="text"
-                placeholder="Search by name, address, or capability..."
+                placeholder="Search by name, address, or protocol…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="input-glass w-full pl-9 pr-4 py-2.5 text-sm"
@@ -144,7 +162,7 @@ export default function ExplorePage() {
             {/* Sort */}
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
+              onChange={(e) => handleSortChange(e.target.value as SortBy)}
               className="input-glass px-3 py-2.5 text-sm pr-8 min-w-[160px] cursor-pointer"
               aria-label="Sort agents"
             >
@@ -162,48 +180,33 @@ export default function ExplorePage() {
             >
               <SlidersHorizontal size={15} />
               Filters
-              {(filter !== 'all' || minStake > 0) && (
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: 'var(--accent)' }}
-                />
+              {filter !== 'all' && (
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)' }} />
               )}
             </button>
 
             {/* View toggle */}
-            <div
-              className="flex rounded-lg overflow-hidden"
-              style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <button
-                onClick={() => setView('grid')}
-                className="p-2.5 transition-colors"
-                style={{
-                  background: view === 'grid' ? 'rgba(0,112,243,0.2)' : 'transparent',
-                  color: view === 'grid' ? 'var(--accent)' : 'var(--muted-foreground)',
-                }}
-                aria-label="Grid view"
-              >
-                <LayoutGrid size={16} />
-              </button>
-              <button
-                onClick={() => setView('list')}
-                className="p-2.5 transition-colors"
-                style={{
-                  background: view === 'list' ? 'rgba(0,112,243,0.2)' : 'transparent',
-                  color: view === 'list' ? 'var(--accent)' : 'var(--muted-foreground)',
-                }}
-                aria-label="List view"
-              >
-                <List size={16} />
-              </button>
+            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+              {(['grid', 'list'] as ViewMode[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className="p-2.5 transition-colors"
+                  style={{
+                    background: view === v ? 'rgba(0,112,243,0.2)' : 'transparent',
+                    color: view === v ? 'var(--accent)' : 'var(--muted-foreground)',
+                  }}
+                  aria-label={`${v} view`}
+                >
+                  {v === 'grid' ? <LayoutGrid size={16} /> : <List size={16} />}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Expanded filters */}
           {showFilters && (
             <GlassCard className="mt-3 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              {/* Filter tabs */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
                   Status
@@ -212,7 +215,7 @@ export default function ExplorePage() {
                   {filterOptions.map((f) => (
                     <button
                       key={f.value}
-                      onClick={() => setFilter(f.value)}
+                      onClick={() => handleFilterChange(f.value)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                       style={{
                         background: filter === f.value ? 'rgba(0,112,243,0.2)' : 'rgba(255,255,255,0.04)',
@@ -225,33 +228,9 @@ export default function ExplorePage() {
                   ))}
                 </div>
               </div>
-
-              <div className="w-px h-12 hidden sm:block" style={{ background: 'rgba(255,255,255,0.06)' }} />
-
-              {/* Min stake */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>
-                  Min Stake (ETH)
-                </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min={0}
-                    max={2}
-                    step={0.1}
-                    value={minStake}
-                    onChange={(e) => setMinStake(parseFloat(e.target.value))}
-                    className="w-32 accent-blue-500"
-                  />
-                  <span className="text-sm font-mono" style={{ color: 'var(--accent)' }}>
-                    {minStake.toFixed(1)}
-                  </span>
-                </div>
-              </div>
-
-              {(filter !== 'all' || minStake > 0) && (
+              {filter !== 'all' && (
                 <button
-                  onClick={() => { setFilter('all'); setMinStake(0) }}
+                  onClick={() => handleFilterChange('all')}
                   className="text-xs flex items-center gap-1 transition-colors sm:ml-auto"
                   style={{ color: 'var(--muted-foreground)' }}
                 >
@@ -261,49 +240,107 @@ export default function ExplorePage() {
             </GlassCard>
           )}
 
-          {/* Results count */}
+          {/* Results count + loading indicator */}
           <div className="flex items-center justify-between mt-4 mb-6">
             <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-              Showing <span className="text-foreground font-medium">{filtered.length}</span> agents
-              {search && <> matching <span className="text-foreground font-medium">&ldquo;{search}&rdquo;</span></>}
+              {isLoading ? (
+                <span className="flex items-center gap-1.5">
+                  <RefreshCw size={13} className="animate-spin" />
+                  Loading…
+                </span>
+              ) : (
+                <>
+                  Showing{' '}
+                  <span className="text-foreground font-medium">
+                    {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)}
+                  </span>{' '}
+                  of <span className="text-foreground font-medium">{total.toLocaleString()}</span> agents
+                  {debouncedSearch && (
+                    <> matching <span className="text-foreground font-medium">&ldquo;{debouncedSearch}&rdquo;</span></>
+                  )}
+                </>
+              )}
             </p>
             <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
               <ArrowUpDown size={12} />
-              <span className="capitalize">{sort}</span>
+              <span>{sortOptions.find((s) => s.value === sort)?.label}</span>
             </div>
           </div>
 
-          {/* Agent grid / list */}
-          {filtered.length === 0 ? (
-            <GlassCard className="p-16 flex flex-col items-center gap-3 text-center">
-              <p className="text-lg font-semibold text-foreground">No agents found</p>
+          {/* Error state */}
+          {error && (
+            <GlassCard className="p-10 flex flex-col items-center gap-3 text-center">
+              <p className="text-lg font-semibold text-foreground">Failed to load agents</p>
               <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                Try adjusting your search or filters
+                Could not reach the 8004scan API. Please try again shortly.
               </p>
             </GlassCard>
-          ) : view === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filtered.map((agent) => (
-                <AgentCard key={agent.id} agent={agent} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {/* List header */}
-              <div
-                className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-widest"
-                style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}
-              >
-                <div className="col-span-4">Agent</div>
-                <div className="col-span-2 text-right">Reputation</div>
-                <div className="col-span-2 text-right">Stake (ETH)</div>
-                <div className="col-span-2 text-right">Feedback</div>
-                <div className="col-span-2 text-right">Status</div>
-              </div>
-              {filtered.map((agent) => (
-                <AgentListRow key={agent.id} agent={agent} />
-              ))}
-            </div>
+          )}
+
+          {/* Agent grid / list */}
+          {!error && (
+            <>
+              {isLoading && agents.length === 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
+                </div>
+              ) : agents.length === 0 ? (
+                <GlassCard className="p-16 flex flex-col items-center gap-3 text-center">
+                  <p className="text-lg font-semibold text-foreground">No agents found</p>
+                  <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                    Try adjusting your search or filters
+                  </p>
+                </GlassCard>
+              ) : view === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {agents.map((agent) => (
+                    <AgentCard key={agent.id} agent={agent} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div
+                    className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-widest"
+                    style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}
+                  >
+                    <div className="col-span-4">Agent</div>
+                    <div className="col-span-2 text-right">Score</div>
+                    <div className="col-span-2 text-right">Stars</div>
+                    <div className="col-span-2 text-right">Feedback</div>
+                    <div className="col-span-2 text-right">Chain</div>
+                  </div>
+                  {agents.map((agent) => (
+                    <AgentListRow key={agent.id} agent={agent} />
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 mt-8">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2 disabled:opacity-40"
+                  >
+                    <ChevronLeft size={15} /> Prev
+                  </button>
+                  <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                    Page <span className="text-foreground font-medium">{page}</span> of{' '}
+                    <span className="text-foreground font-medium">{totalPages}</span>
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2 disabled:opacity-40"
+                  >
+                    Next <ChevronRight size={15} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -313,123 +350,192 @@ export default function ExplorePage() {
   )
 }
 
-function AgentCard({ agent }: { agent: Agent }) {
-  const level = getRepLevel(agent.reputationScore)
+// ─── Agent Card (grid) ────────────────────────────────────────────────────────
+
+function AgentCard({ agent }: { agent: Agent8004 }) {
+  const level = getRepLevel(agent.total_score)
+  const initials = agentInitials(agent.name)
   return (
-    <Link href={`/agent/${agent.address}`}>
+    <Link href={`/agent/${encodeURIComponent(agent.agent_id)}`}>
       <GlassCard className="p-5 flex flex-col gap-4 h-full transition-all duration-200 hover:-translate-y-1 cursor-pointer" hover>
         {/* Header */}
         <div className="flex items-start justify-between">
-          <AgentAvatar name={agent.name} address={agent.address} size={44} />
-          <TrustBadge score={agent.reputationScore} size="md" />
+          {agent.image_url ? (
+            <div className="relative w-11 h-11 rounded-full overflow-hidden flex-shrink-0 border"
+              style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+              <Image src={agent.image_url} alt={agent.name} fill className="object-cover" unoptimized />
+            </div>
+          ) : (
+            <AgentAvatar name={initials} address={agent.owner_address} size={44} />
+          )}
+          <TrustBadge score={Math.round(agent.total_score)} size="md" />
         </div>
 
-        {/* Name and address */}
+        {/* Name and agent_id */}
         <div>
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="font-semibold text-foreground">{agent.name}</span>
-            {agent.isVerified && (
-              <CheckCircle size={13} style={{ color: 'var(--verified)' }} />
-            )}
+            <span className="font-semibold text-foreground truncate">{agent.name}</span>
+            {agent.is_verified && <CheckCircle size={13} style={{ color: 'var(--verified)' }} />}
           </div>
           <p className="address-mono text-xs truncate" style={{ color: 'var(--muted-foreground)' }}>
-            {truncateAddress(agent.address, 6)}
+            {truncateAddress(agent.owner_address, 6)}
           </p>
         </div>
 
-        {/* Capabilities */}
-        <div className="flex flex-wrap gap-1.5">
-          {agent.capabilities.slice(0, 3).map((cap) => (
-            <span
-              key={cap}
-              className="px-2 py-0.5 rounded-md text-[11px] font-medium"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'var(--muted-foreground)',
-              }}
-            >
-              {cap}
-            </span>
-          ))}
-        </div>
+        {/* Description */}
+        {agent.description && (
+          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--muted-foreground)' }}>
+            {agent.description}
+          </p>
+        )}
+
+        {/* Protocols */}
+        {agent.supported_protocols.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {agent.supported_protocols.slice(0, 3).map((p) => (
+              <span
+                key={p}
+                className="px-2 py-0.5 rounded-md text-[11px] font-medium"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'var(--muted-foreground)',
+                }}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="divider" />
 
-        {/* Stats row */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <p className="stat-number text-sm font-bold" style={{ color: level.color }}>
-              {agent.reputationScore}
+              {Math.round(agent.total_score)}
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Rep.</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Score</p>
           </div>
           <div>
             <p className="stat-number text-sm font-bold" style={{ color: 'var(--accent)' }}>
-              {agent.stakeAmount.toFixed(3)}
+              {agent.star_count.toLocaleString()}
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>ETH Staked</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Stars</p>
           </div>
           <div>
             <p className="stat-number text-sm font-bold text-foreground">
-              {agent.attestationCount}
+              {agent.total_feedbacks}
             </p>
             <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Feedback</p>
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="flex items-center gap-2">
-          {agent.isVerified && <span className="badge-verified">Verified</span>}
-          {agent.isStaked && <span className="badge-staked">Staked</span>}
+        {/* Chain + badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              color: 'var(--muted-foreground)',
+            }}
+          >
+            <Globe size={10} />
+            {chainName(agent.chain_id)}
+          </span>
+          {agent.is_verified && <span className="badge-verified">Verified</span>}
+          {agent.x402_supported && (
+            <span
+              className="px-2 py-0.5 rounded-md text-[11px] font-medium"
+              style={{
+                background: 'rgba(0,112,243,0.1)',
+                border: '1px solid rgba(0,112,243,0.2)',
+                color: 'var(--accent)',
+              }}
+            >
+              x402
+            </span>
+          )}
         </div>
       </GlassCard>
     </Link>
   )
 }
 
-function AgentListRow({ agent }: { agent: Agent }) {
-  const level = getRepLevel(agent.reputationScore)
+// ─── Agent List Row ───────────────────────────────────────────────────────────
+
+function AgentListRow({ agent }: { agent: Agent8004 }) {
+  const level = getRepLevel(agent.total_score)
+  const initials = agentInitials(agent.name)
   return (
-    <Link href={`/agent/${agent.address}`}>
+    <Link href={`/agent/${encodeURIComponent(agent.agent_id)}`}>
       <GlassCard className="px-4 py-3 transition-all duration-150 hover:border-white/[0.14] cursor-pointer">
         <div className="grid grid-cols-12 gap-4 items-center">
-          {/* Agent info */}
           <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
-            <AgentAvatar name={agent.name} address={agent.address} size={36} />
+            {agent.image_url ? (
+              <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border"
+                style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                <Image src={agent.image_url} alt={agent.name} fill className="object-cover" unoptimized />
+              </div>
+            ) : (
+              <AgentAvatar name={initials} address={agent.owner_address} size={36} />
+            )}
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-medium text-sm text-foreground">{agent.name}</span>
-                {agent.isVerified && <CheckCircle size={12} style={{ color: 'var(--verified)' }} />}
+                <span className="font-medium text-sm text-foreground truncate">{agent.name}</span>
+                {agent.is_verified && <CheckCircle size={12} style={{ color: 'var(--verified)' }} />}
               </div>
               <p className="address-mono text-[11px] truncate" style={{ color: 'var(--muted-foreground)' }}>
-                {truncateAddress(agent.address, 6)}
+                {truncateAddress(agent.owner_address, 6)}
               </p>
             </div>
           </div>
-          {/* Score */}
           <div className="hidden sm:block col-span-2 text-right">
             <span className="stat-number text-sm font-bold" style={{ color: level.color }}>
-              {agent.reputationScore}
+              {Math.round(agent.total_score)}
             </span>
           </div>
-          {/* Stake */}
           <div className="hidden sm:block col-span-2 text-right">
             <span className="stat-number text-sm font-medium" style={{ color: 'var(--accent)' }}>
-              {agent.stakeAmount.toFixed(3)} ETH
+              {agent.star_count.toLocaleString()}
             </span>
           </div>
-          {/* Attestations */}
           <div className="hidden sm:block col-span-2 text-right">
-            <span className="text-sm text-foreground">{agent.attestationCount}</span>
+            <span className="text-sm text-foreground">{agent.total_feedbacks}</span>
           </div>
-          {/* Status */}
-          <div className="hidden sm:flex col-span-2 justify-end gap-1.5">
-            {agent.isVerified && <span className="badge-verified">Verified</span>}
-            {agent.isStaked && <span className="badge-staked">Staked</span>}
+          <div className="hidden sm:flex col-span-2 justify-end gap-1.5 items-center">
+            <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+              {chainName(agent.chain_id)}
+            </span>
           </div>
         </div>
       </GlassCard>
     </Link>
+  )
+}
+
+// ─── Skeleton card (loading state) ───────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <GlassCard className="p-5 flex flex-col gap-4 h-52 animate-pulse">
+      <div className="flex items-start justify-between">
+        <div className="w-11 h-11 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+        <div className="w-10 h-6 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="h-4 rounded w-3/4" style={{ background: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-3 rounded w-1/2" style={{ background: 'rgba(255,255,255,0.04)' }} />
+      </div>
+      <div className="h-8 rounded" style={{ background: 'rgba(255,255,255,0.04)' }} />
+      <div className="divider" />
+      <div className="grid grid-cols-3 gap-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-8 rounded" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        ))}
+      </div>
+    </GlassCard>
   )
 }
