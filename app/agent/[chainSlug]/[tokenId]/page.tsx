@@ -50,7 +50,7 @@ export default async function AgentPage({ params }: { params: Promise<{ chainSlu
 
   const parts = agent.agent_id.split(':')
   const registryAddress = parts[1] ?? agent.contract_address
-  const tokenId = parts[2] ?? agent.token_id
+  const resolvedTokenId = parts[2] ?? agent.token_id
 
   const parseStatus = agent.parse_status
   const services = agent.services ?? {}
@@ -391,7 +391,7 @@ export default async function AgentPage({ params }: { params: Promise<{ chainSlu
                 <div className="flex flex-col gap-0 divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
                   {[
                     { label: 'Agent ID', value: agent.agent_id, mono: true, copy: true, full: false },
-                    { label: 'Token ID', value: tokenId, mono: false },
+                    { label: 'Token ID', value: resolvedTokenId, mono: false },
                     { label: 'Registry Contract', value: registryAddress, mono: true, copy: true, full: false },
                     { label: 'Network', value: `${chainName(agent.chain_id)} — Chain ID ${agent.chain_id}`, mono: false },
                     { label: 'Owner', value: agent.owner_address, mono: true, copy: true, full: false, link: `${explorer}/address/${agent.owner_address}` },
