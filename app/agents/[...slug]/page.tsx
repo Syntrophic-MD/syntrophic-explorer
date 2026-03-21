@@ -31,35 +31,22 @@ export const dynamic = 'force-dynamic'
 
 export default async function AgentPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params
-  console.log('[v0] AgentPage params slug:', slug)
 
   const chainSlug = slug[0] ?? ''
   const tokenId = slug[1] ?? ''
-  console.log('[v0] chainSlug:', chainSlug, '| tokenId:', tokenId)
 
-  if (!chainSlug || !tokenId) {
-    console.log('[v0] notFound: missing chainSlug or tokenId')
-    notFound()
-  }
+  if (!chainSlug || !tokenId) notFound()
 
   const chainIdNum = CHAIN_SLUG_TO_ID[chainSlug.toLowerCase()]
-  console.log('[v0] resolved chainIdNum:', chainIdNum, '(from slug:', chainSlug.toLowerCase(), ')')
-  if (!chainIdNum) {
-    console.log('[v0] notFound: unrecognised chain slug:', chainSlug)
-    notFound()
-  }
+  if (!chainIdNum) notFound()
 
   const registry = REGISTRY_BY_CHAIN[chainIdNum] ?? '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'
   const agentId = `${chainIdNum}:${registry}:${tokenId}`
-  console.log('[v0] constructed agentId:', agentId)
-  console.log('[v0] fetchAgent URL will be: https://www.8004scan.io/api/v1/agents/' + agentId)
 
   let agent: AgentDetail
   try {
     agent = await fetchAgent(agentId)
-    console.log('[v0] fetchAgent success — agent.name:', agent.name, '| chain_id:', agent.chain_id)
-  } catch (err) {
-    console.error('[v0] fetchAgent threw for agentId', agentId, ':', err)
+  } catch {
     notFound()
   }
 

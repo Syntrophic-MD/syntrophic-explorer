@@ -125,21 +125,73 @@ export async function fetchAgents(query: AgentsQuery = {}): Promise<AgentsRespon
 }
 
 export async function fetchAgent(agentId: string): Promise<AgentDetail> {
-  // Use literal colons — the 8004scan API requires them unencoded in the path
-  const url = `${API_BASE}/agents/${agentId}`
-  console.log('[v0] fetchAgent → GET', url)
-  const res = await fetch(url, {
+  // The upstream /agents/{id} endpoint does not work — use the list endpoint
+  // with search + chain_id to find the agent, then fetch its detail via UUID.
+  // agentId format: "{chainId}:{registry}:{tokenId}"
+  const parts = agentId.split(':')
+  const chainId = parts[0]
+  const tokenId = parts[2]
+
+  if (!chainId || !tokenId) {
+    throw new Error(`Invalid agentId format: ${agentId}`)
+  }
+
+  const listParams = new URLSearchParams({
+    search: tokenId,
+    chain_id: chainId,
+    page: '1',
+    page_size: '5',
+  })
+  const listUrl = `${API_BASE}/agents?${listParams.toString()}`
+  const listRes = await fetch(listUrl, {
     headers: { Accept: 'application/json' },
     next: { revalidate: 60 },
   })
-  console.log('[v0] fetchAgent ← status:', res.status, res.statusText)
-  if (!res.ok) {
-    let body = ''
-    try { body = await res.text() } catch { /* ignore */ }
-    console.error('[v0] fetchAgent error body:', body)
-    throw new Error(`Failed to fetch agent ${agentId}: ${res.status} — ${body}`)
+  if (!listRes.ok) {
+    throw new Error(`Failed to search agents: ${listRes.status}`)
   }
-  return res.json()
+  const listData: AgentsResponse = await listRes.json()
+
+  // Find the exact match by agent_id
+  const match = listData.items.find((a) => a.agent_id === agentId)
+  if (!match) {
+    throw new Error(`Agent not found: ${agentId}`)
+  }
+
+  // Fetch detail by UUID — if it fails, cast the list item as AgentDetail
+  const detailUrl = `${API_BASE}/agents/${match.id}`
+  const detailRes = await fetch(detailUrl, {
+    headers: { Accept: 'application/json' },
+    next: { revalidate: 60 },
+  })
+  if (detailRes.ok) {
+    return detailRes.json()
+  }
+
+  // Fallback: return list item augmented with nullable detail fields
+  return {
+    ...match,
+    agent_type: null,
+    tags: [],
+    categories: [],
+    services: null,
+    scores: null,
+    cross_chain_links: [],
+    created_block_number: null,
+    created_tx_hash: null,
+    is_endpoint_verified: false,
+    endpoint_verified_at: null,
+    endpoint_verified_domain: null,
+    endpoint_verification_error: null,
+    endpoint_last_checked_at: null,
+    is_active: true,
+    supported_trust_models: [],
+    health_status: null,
+    health_checked_at: null,
+    total_validations: 0,
+    successful_validations: 0,
+    parse_status: null,
+  }
 }
 
 // ─── SWR key helpers ──────────────────────────────────────────────────────────
