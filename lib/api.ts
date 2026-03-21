@@ -4,6 +4,9 @@
 
 export const API_BASE = 'https://www.8004scan.io/api/v1'
 
+// Internal proxy base — used by client-side fetchers to avoid CORS
+const PROXY_BASE = '/api/agents'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface Agent8004 {
@@ -116,17 +119,13 @@ export async function fetchAgents(query: AgentsQuery = {}): Promise<AgentsRespon
   if (chain_id !== undefined) params.set('chain_id', String(chain_id))
   if (is_verified !== undefined) params.set('is_verified', String(is_verified))
 
-  const res = await fetch(`${API_BASE}/agents?${params.toString()}`, {
-    next: { revalidate: 60 },
-  })
+  const res = await fetch(`${PROXY_BASE}?${params.toString()}`)
   if (!res.ok) throw new Error(`Failed to fetch agents: ${res.status}`)
   return res.json()
 }
 
 export async function fetchAgent(agentId: string): Promise<AgentDetail> {
-  const res = await fetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}`, {
-    next: { revalidate: 60 },
-  })
+  const res = await fetch(`${PROXY_BASE}/${encodeURIComponent(agentId)}`)
   if (!res.ok) throw new Error(`Failed to fetch agent ${agentId}: ${res.status}`)
   return res.json()
 }
