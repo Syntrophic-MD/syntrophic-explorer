@@ -25,46 +25,18 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { GlassCard, TrustBadge, AgentAvatar } from '@/components/ui'
 import { truncateAddress, getRepLevel, formatDate } from '@/lib/utils'
-import { fetchAgent, agentInitials, chainName, type AgentDetail } from '@/lib/api'
+import { fetchAgent, agentInitials, chainName, CHAIN_SLUG_TO_ID, REGISTRY_BY_CHAIN, type AgentDetail } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
-// Resolve agent_id from multiple URL formats:
-//   - encoded agent_id: "8453%3A0x...%3A1380"  → "8453:0x...:1380"
-//   - numeric chain alias + tokenId handled by looking up via search
-const CHAIN_SLUGS: Record<string, number> = {
-  base: 8453,
-  ethereum: 1,
-  arbitrum: 42161,
-  optimism: 10,
-  polygon: 137,
-  celo: 42220,
-  bnb: 56,
-}
+export default async function AgentPage({ params }: { params: Promise<{ chainSlug: string; tokenId: string }> }) {
+  const { chainSlug, tokenId } = await params
 
-async function resolveAgentId(raw: string): Promise<string> {
-  const decoded = decodeURIComponent(raw)
+  const chainIdNum = CHAIN_SLUG_TO_ID[chainSlug.toLowerCase()]
+  if (!chainIdNum) notFound()
 
-  // Already a full agent_id (contains colons)
-  if (decoded.includes(':')) return decoded
-
-  // Might be a numeric chain_id + tokenId joined with underscore or slash encoded as %2F
-  // The explore page always encodes the full agent_id so this is a fallback for direct URL entry
-  // Try treating raw as "chainSlug_tokenId" e.g. "base_1380"
-  const parts = decoded.split('_')
-  if (parts.length === 2) {
-    const chainId = CHAIN_SLUGS[parts[0].toLowerCase()] ?? parseInt(parts[0])
-    if (!isNaN(chainId)) {
-      return `${chainId}:${parts[1]}`
-    }
-  }
-
-  return decoded
-}
-
-export default async function AgentPage({ params }: { params: Promise<{ address: string }> }) {
-  const { address } = await params
-  const agentId = await resolveAgentId(address)
+  const registry = REGISTRY_BY_CHAIN[chainIdNum] ?? '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'
+  const agentId = `${chainIdNum}:${registry}:${tokenId}`
 
   let agent: AgentDetail
   try {
