@@ -8,7 +8,7 @@ import { Menu, X, Zap } from 'lucide-react'
 const navLinks = [
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/agents/get-started', label: 'For Agents' },
-  { href: 'https://eips.ethereum.org/EIPS/eip-8004', label: 'ERC-8004', external: true },
+  { href: '/erc-draft', label: 'ERC Draft' },
 ]
 
 export function Navbar() {

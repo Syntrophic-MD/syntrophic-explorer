@@ -5,7 +5,7 @@ type FooterLink = { label: string; href: string; external?: boolean }
 
 const footerLinks: Record<string, FooterLink[]> = {
   Protocol: [
-    { label: 'ERC-8004 Spec', href: 'https://eips.ethereum.org/EIPS/eip-8004', external: true },
+    { label: 'ERC Draft', href: '/erc-draft' },
     { label: 'How It Works', href: '/how-it-works' },
     { label: 'Community Guidelines', href: '/community' },
   ],
